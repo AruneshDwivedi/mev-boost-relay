@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/redis/go-redis/v9"
@@ -34,9 +35,11 @@ func NewBuilderBids(bidValueMap map[string]string) *BuilderBids {
 	}
 	for builderPubkey, bidValue := range bidValueMap {
 		b.bidValues[builderPubkey] = new(big.Int)
-		b.bidValues[builderPubkey].SetString(bidValue, 10)
+		if _, ok := b.bidValues[builderPubkey].SetString(bidValue, 10); !ok {
+			return nil, fmt.Errorf("failed to parse bid value %q for builder %s", bidValue, builderPubkey)
+		}
 	}
-	return &b
+	return &b, nil
 }
 
 func (b *BuilderBids) getTopBid() (string, *big.Int) {
